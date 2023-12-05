@@ -1,34 +1,107 @@
+import re
 
 if __name__ == '__main__':
     total = 0
     file = open('input.txt', 'r')
     lines = file.readlines()
     # lines = [
-    #     "Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green",
-    #     "Game 2: 1 blue, 2 green; 3 green, 4 blue, 1 red; 1 green, 1 blue",
-    #     "Game 3: 8 green, 6 blue, 20 red; 5 blue, 4 red, 13 green; 5 green, 1 red",
-    #     "Game 4: 1 green, 3 red, 6 blue; 3 green, 6 red; 3 green, 15 blue, 14 red",
-    #     "Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green",
+    #     "467..114..",
+    #     "...*......",
+    #     "..35..633.",
+    #     "......#...",
+    #     "617*......",
+    #     ".....+.58.",
+    #     "..592.....",
+    #     "......755.",
+    #     "...$.*....",
+    #     ".664.598..",
     # ]
-
+    regex = re.compile('[@_!#$%^&*()<>?/\|}{~:+=-]')
+    matrix = []
     for line in lines:
-        game_id = (line.split(':')[0]).split()[1]
-        iterations = (line.split(':')[1]).split(';')
-        power = 1
-        color_maxes = {
-            "red": 0,
-            "green": 0,
-            "blue": 0,
-        }
-        for i in iterations:
-            colors = i.split(',')
-            for color in colors:
-                amt, col = color.split()
-                if color_maxes[col] < int(amt):
-                    color_maxes[col] = int(amt)
-        for k in color_maxes.keys():
-            power *= color_maxes[k]
-        total += power
+        l = list(line)
+        matrix.append(l)
+    # row = index within list
+    # col = lst number
+    row_max = len(matrix)
+    gear_coordinate_to_adjacent_nums = {}
+    for row in range(row_max):
+        col = 0
+        col_max = len(matrix[row])
+        while col < col_max:
+            # check all 4 directions if this is a digit, and all 4 diagonal directions
+            hit = False
+            coordinate = None
+            if matrix[row][col].isdigit():
+                if not hit and row - 1 >= 0:
+                    if regex.search(matrix[row-1][col]):
+                        hit = True
+                        coordinate = ((row-1), col)
+                if not hit and row + 1 < row_max:
+                    if regex.search(matrix[row+1][col]):
+                        hit = True
+                        coordinate = ((row + 1), col)
+                if not hit and col - 1 >= 0:
+                    if regex.search(matrix[row][col-1]):
+                        hit = True
+                        coordinate = (row, col-1)
+                if not hit and col + 1 < col_max:
+                    if regex.search(matrix[row][col+1]):
+                        hit = True
+                        coordinate = (row, col+1)
+                if not hit and row + 1 < row_max and col + 1 < col_max:
+                    if regex.search(matrix[row + 1][col+1]):
+                        hit = True
+                        coordinate = ((row + 1), (col + 1))
+                if not hit and row - 1 >= 0 and col - 1 >= 0:
+                    if regex.search(matrix[row-1][col-1]):
+                        hit = True
+                        coordinate = ((row - 1), (col - 1))
+                if not hit and row + 1 < row_max and col - 1 >=0:
+                    if regex.search(matrix[row + 1][col-1]):
+                        hit = True
+                        coordinate = ((row + 1), (col - 1))
+                if not hit and row - 1 >= 0 and col + 1 < col_max:
+                    if regex.search(matrix[row-1][col+1]):
+                        hit = True
+                        coordinate = ((row - 1), (col + 1))
+                if hit:
+                    # get the entire length number
+                    hit_index = col
+                    start = hit_index
+                    end = hit_index
 
+                    asc_index = hit_index + 1
+                    while asc_index < col_max:
+                        if matrix[row][asc_index].isdigit():
+                            end = asc_index
+                            asc_index += 1
+                        else:
+                            break
+                    desc_index = hit_index - 1
+                    while desc_index >= 0:
+                        if matrix[row][desc_index].isdigit():
+                            start = desc_index
+                            desc_index -= 1
+                        else:
+                            break
+                    full_num = int(''.join(matrix[row][start:end + 1]))
+                    if str(coordinate) in gear_coordinate_to_adjacent_nums:
+                        nums = gear_coordinate_to_adjacent_nums[str(coordinate)]
+                        nums.append(full_num)
+                        gear_coordinate_to_adjacent_nums[str(coordinate)] = nums
+                    else:
+                        gear_coordinate_to_adjacent_nums[str(coordinate)] = [full_num]
+                    col = end + 1
+                else:
+                    col += 1
+            else:
+                col += 1
+
+    print(gear_coordinate_to_adjacent_nums)
+    for k in gear_coordinate_to_adjacent_nums.keys():
+        if len(gear_coordinate_to_adjacent_nums[k]) == 2:
+            subtotal = gear_coordinate_to_adjacent_nums[k][0] * gear_coordinate_to_adjacent_nums[k][1]
+            total += subtotal
     print("TOTAL: ", total)
 
